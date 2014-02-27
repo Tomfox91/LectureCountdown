@@ -1,0 +1,25 @@
+{
+  "uuid": "6ac0f9f7-c845-4ca4-af83-dcc4c6db9d39",
+  "shortName": "LecCountdown",
+  "longName": "Lecture Countdown",
+  "companyName": "TFC",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "capabilities": ["configurable"],
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "mon": 0,
+    "tue": 1,
+    "wed": 2,
+    "thu": 3,
+    "fri": 4,
+    "sat": 5,
+    "sun": 6,
+    "override": 10
+  },
+  "resources": {
+    "media": []
+  }
+}
