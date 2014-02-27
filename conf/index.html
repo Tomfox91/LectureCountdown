@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+    <!-- "inspired" by https://github.com/danielnavarrogomez/xbmc_remote -->
+    <head>
+        <title>Lecture Countdown Configuration</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.1/jquery.mobile-1.4.1.min.css" />
+        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script src="http://code.jquery.com/mobile/1.4.1/jquery.mobile-1.4.1.min.js"></script>
+    </head>
+    <body>
+        <div data-role="page" id="main">
+                <h3>Weekly schedule</h3>
+                <div data-role="fieldcontain">
+                    <label for="mon">Monday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="mon" id="mon-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="tue">Tuesday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="tue" id="tue-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="wed">Wednesday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="wed" id="wed-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="thu">Thursday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="thu" id="thu-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="fri">Friday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="fri" id="fri-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="sat">Saturday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="sat" id="sat-ta"></textarea>
+                </div>
+
+                <div data-role="fieldcontain">
+                    <label for="sun">Sunday</label>
+                    <input type="text" placeholder="HH:MM,HH:MM (max 10)" name="sun" id="sun-ta"></textarea>
+                </div>
+
+
+                <h3>Override</h3>
+
+                <div data-role="fieldcontain">
+                    <label for="override">Countdown override</label>
+                    <input type="text" placeholder="Off" name="override" id="override-ta"></textarea>
+                    <p>If set, the watchface will show a countdown to this time instead. It will revert to weekly schedule when this time is reached.</p>
+                </div>
+
+
+
+                <div class="ui-body ui-body-b">
+                    <fieldset class="ui-grid-a">
+                            <div class="ui-block-a"><button type="submit" data-theme="d" id="b-cancel">Cancel</button></div>
+                            <div class="ui-block-b"><button type="submit" data-theme="a" id="b-submit">Submit</button></div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            function separateTimes(s) {
+                var hhmm = s.match(/\d?\d:\d\d/g) || [];
+                
+                if (hhmm.length > 10) {
+                    alert("Too many times");
+                }
+                
+                for (var i = 0; i < hhmm.length; i++) {
+                    if (hhmm[i].length === 4) {
+                        hhmm[i] = '0' + hhmm[i];
+                    }
+                }
+
+                hhmm.sort();
+                var res = [];
+                
+                for (var i = 0; i < hhmm.length; i++) {
+                    var s = hhmm[i].match(/\d+/g);
+                    var t = {h: parseInt(s[0]), m: parseInt(s[1])};
+                    if (t.h > 23 || t.m > 59) {
+                        alert("Illegal time");
+                    }
+                    res.push(t);
+                }
+                
+                return res;
+            }
+            
+            var days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            
+            function getSchedule() {
+                
+                var res = []
+                
+                for (var d = 0; d < 7; d++) {
+                    res.push(separateTimes($('#' + days[d] + '-ta').val()));
+                }
+                
+                return res;
+            }
+            
+            function compileSchedule(s) {
+                for (var d = 0; d < 7; d++) {
+                    var str = ""
+                    for (var j = 0; j < s[d].length; j++) {
+                        str += s[d][j].h + ':' + (s[d][j].m < 10 ? '0' : '') + s[d][j].m + ',';
+                    }
+                    $('#' + days[d] + '-ta').val(str.slice(0,-1));
+                }
+            }
+            
+            function getOverride() {
+                if (v = $('#override-ta').val()) {
+                    var s = v.match(/\d+/g);
+                    var t = {h: parseInt(s[0]), m: parseInt(s[1])};
+                    if (t.h > 23 || t.m > 59) {
+                        alert("Illegal time");
+                    }
+                    
+                    return t;
+
+                } else {
+                    return null;
+                }
+            }
+                        
+            
+            function getConfig(s, o) {
+                var conf = {}
+                for (var d = 0; d < 7; d++) {
+                    var arr = []
+                    for (var j = 0; j < s[d].length; j++) {
+                        arr.push(s[d][j].h * 60 + s[d][j].m);
+                    }
+                    conf[days[d]] = arr;
+                }
+                conf.override = o ? (o.h * 60 + o.m) : -1;
+                return conf;
+            }
+                
+            $().ready(function() {
+                if (localStorage.weeklySchedule) {
+                    compileSchedule(JSON.parse(localStorage.weeklySchedule));
+                }            
+            
+                $("#b-cancel").click(function() {
+                    console.log("Cancel");
+                    document.location = "pebblejs://close";
+                });
+
+                $("#b-submit").click(function() {
+                    console.log("Submit");
+                    
+                    var s = getSchedule();
+                    var o = getOverride();
+                    
+                    localStorage.weeklySchedule = JSON.stringify(s);
+                    
+                    var conf = JSON.stringify(getConfig(s, o));
+                    
+                    var location = "pebblejs://close#" + encodeURIComponent(conf);
+                    console.log("Warping to: " + location);
+                    document.location = location;
+                });
+
+            });
+        </script>
+    </body>
+</html>
